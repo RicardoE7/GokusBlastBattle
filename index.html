@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goku's Blast Battle - Play Online</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+
+        #fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.5);
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Cpath d="M14 28h-4v10h10v-4h-6v-6zm-4-8h4v-6h6v-4H10v10zm24 14h-6v4h10V28h-4v6zm-6-24v4h6v6h4V10H28z" fill="%23fff"/%3E%3C/svg%3E');
+            background-size: 24px;
+            background-repeat: no-repeat;
+            background-position: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .fullscreen #fullscreen-btn {
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Cpath d="M10 32h6v6h4V28H10v4zm6-16h-6v4h10V10h-4v6zm12 22h4v-6h6v-4H28v10zm4-22v-6h-4v10h10v-4h-6z" fill="%23fff"/%3E%3C/svg%3E');
+        }
+        
+        #fullscreen-btn:hover {
+            background-color: rgba(255, 107, 53, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .game-integrated {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-canvas-container {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            width: 485px;
+            height: 402px;
+        }
+        
+        .game-canvas {
+            display: block;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .game-canvas:hover {
+            transform: scale(1.02);
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .game-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.4);
+        }
+        
+        .game-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .fullscreen .game-integrated {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.98);
+            border: none;
+            border-radius: 0;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fullscreen .game-canvas-container {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        
+        .fullscreen .game-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .fullscreen .game-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .fullscreen #fullscreen-btn {
+            top: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-size: 30px;
+        }
+        
+
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 10px;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .dragon-ball-loader {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dragon-ball {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #ff6b35, #f7931e);
+            border-radius: 50%;
+            position: relative;
+            animation: dragonBallPulse 2s ease-in-out infinite;
+            box-shadow: 
+                0 0 30px rgba(255, 107, 53, 0.6),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .dragon-ball::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #ffed4e);
+            border-radius: 50%;
+            animation: dragonBallCore 2s ease-in-out infinite;
+        }
+        
+        .dragon-ball::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
+            border-radius: 50%;
+            animation: dragonBallInner 2s ease-in-out infinite;
+        }
+        
+        .energy-rings {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .ring {
+            position: absolute;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            animation: energyRingRotate 3s linear infinite;
+        }
+        
+        .ring-1 {
+            width: 120px;
+            height: 120px;
+            border-top-color: #ff6b35;
+            animation-duration: 3s;
+        }
+        
+        .ring-2 {
+            width: 140px;
+            height: 140px;
+            border-right-color: #f7931e;
+            animation-duration: 2.5s;
+            animation-direction: reverse;
+        }
+        
+        .ring-3 {
+            width: 160px;
+            height: 160px;
+            border-bottom-color: #ffd700;
+            animation-duration: 2s;
+        }
+        
+        .loading-text {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .loading-text h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+        
+        .loading-text p {
+            font-size: 1rem;
+            color: #cccccc;
+            margin: 0;
+            animation: textFade 2s ease-in-out infinite;
+        }
+        
+        .game-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .game-content iframe {
+            width: 100% !important;
+            height: 402px !important;
+            border: none !important;
+            border-radius: 10px !important;
+            background: transparent !important;
+            display: block !important;
+        }
+        
+
+        @keyframes dragonBallPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 30px rgba(255, 107, 53, 0.6),
+                    inset 0 0 20px rgba(255, 255, 255, 0.3);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 
+                    0 0 50px rgba(255, 107, 53, 0.8),
+                    inset 0 0 30px rgba(255, 255, 255, 0.5);
+            }
+        }
+        
+        @keyframes dragonBallCore {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes dragonBallInner {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes energyRingRotate {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        @keyframes textGlow {
+            0% { 
+                text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+            }
+            100% { 
+                text-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 30px rgba(255, 107, 53, 0.6);
+            }
+        }
+        
+        @keyframes textFade {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+
+        .fullscreen .loading-screen {
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="twinkling"></div>
+    
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <h1>Goku's Blast Battle</h1>
+            </div>
+            <nav class="nav">
+                <a href="#game" class="nav-link">Play Game</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#controls" class="nav-link">Controls</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2 class="hero-title">Ready for Battle?</h2>
+                    <p class="hero-subtitle">Experience the ultimate Dragon Ball Z defense game!</p>
+                    <a href="#game" class="cta-button">
+                        <i class="fas fa-play"></i>
+                        Start Playing
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="game" class="game-section">
+            <div class="container">
+                <div class="game-container">
+                    <h3 class="section-title">Goku's Blast Battle</h3>
+                    <div class="game-integrated">
+                        <div class="game-canvas-container">
+
+                            <div id="loading-screen" class="loading-screen" style="display: flex;">
+                                <div class="loading-content">
+                                    <div class="dragon-ball-loader">
+                                        <div class="dragon-ball"></div>
+                                        <div class="energy-rings">
+                                            <div class="ring ring-1"></div>
+                                            <div class="ring ring-2"></div>
+                                            <div class="ring ring-3"></div>
+                                        </div>
+                                        <div class="loading-text">
+                                            <h3>Powering Up...</h3>
+                                            <p>Preparing for battle</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+
+                            <div id="game-content" class="game-content" style="display: none;">
+                                <canvas id="gameCanvas" class="game-canvas" width="485" height="402"></canvas>
+                            </div>
+                        </div>
+                        <div class="game-controls">
+                            <button id="start-btn" class="game-btn" disabled>
+                                <i class="fas fa-play"></i>
+                                Start Game
+                            </button>
+                            <button id="stop-btn" class="game-btn" disabled>
+                                <i class="fas fa-pause"></i>
+                                Stop Game
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        <p class="game-description">
+                            Defend the ground as Goku against Vegeta's relentless energy blasts! Destroy incoming ki blasts before they reach the ground and protect your three hearts.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <h3 class="section-title">About the Game</h3>
+                <div class="about-content">
+                    <div class="about-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <h4>Defense Mission</h4>
+                        <p>Protect the ground from Vegeta's relentless energy blasts as Goku in this intense defense game.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-bolt"></i>
+                        <h4>Energy Blasts</h4>
+                        <p>Shoot your own ki blasts to destroy incoming enemy projectiles before they reach the ground.</p>
+                    </div>
+                    <div class="about-card">
+                        <i class="fas fa-heart"></i>
+                        <h4>Three Lives</h4>
+                        <p>You have three hearts to protect. Each enemy blast that hits the ground costs you one life!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="controls" class="controls-section">
+            <div class="container">
+                <h3 class="section-title">How to Play</h3>
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Move Left (A)</span>
+                    </div>
+                    <div class="control-item">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Move Right (D)</span>
+                    </div>
+                    <div class="control-item">
+                        <i class="fas fa-space-shuttle"></i>
+                        <span>Shoot Blast (Spacebar)</span>
+                    </div>
+                </div>
+                <p class="controls-note">
+                    Use your keyboard to control Goku. The game gets progressively harder as you destroy more enemy blasts - speed increases every 10 successful hits!
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Goku's Blast Battle</h4>
+                    <p>An epic Dragon Ball Z defense game created with Scratch.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="#game">Play Game</a>
+                    <a href="#about">About</a>
+                    <a href="#controls">Controls</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="https://github.com/RicardoE7" target="_blank" class="social-link"><i class="fab fa-github"></i></a>
+                        <a href="https://www.linkedin.com/in/ricardo-edwards-software-engineer/" target="_blank" class="social-link"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Goku's Blast Battle. All rights reserved. | Created by <a href="https://github.com/RicardoE7" target="_blank" style="color: #ff6b35; text-decoration: none;">Ricardo Edwards</a></p>
+                <p style="font-size: 0.8rem; color: #888; margin-top: 8px;">
+                    Dragon Ball Z is a registered trademark of Shueisha, Inc. and Toei Animation Co., Ltd. This fan project is not affiliated with, endorsed by, or connected to the official Dragon Ball franchise. All Dragon Ball Z characters, names, and related elements are property of their respective owners.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+
+    <button id="fullscreen-btn" aria-label="Enter/exit fullscreen"></button>
+
+    <script src="script.js"></script>
+</body>
+</html> 
